@@ -16,10 +16,10 @@ standard. It is written to be read in order, top to bottom.
 
 It defines the four primitives (the Control, Specification, and Execution Planes,
 and the Artefact), the invocation loop that binds them, the layered structure of
-context, and the way workflows are defined and configured. An implementation is
-**conformant** when it satisfies the *must / must not* rules for the primitive it
-implements. A tool that conflates the responsibilities of multiple primitives is
-not conformant.
+context (an application of the Interpretable Context Methodology), and the way
+workflows are defined and configured. An implementation is **conformant** when it
+satisfies the *must / must not* rules for the primitive it implements. A tool that
+conflates the responsibilities of multiple primitives is not conformant.
 
 Anything outside FRAMEWORK.md, including any reference implementation in this
 repository, is **non-normative**. It may demonstrate the standard. It is not the

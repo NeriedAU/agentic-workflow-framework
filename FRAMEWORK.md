@@ -128,7 +128,7 @@ The Control Plane and the Specification Plane are separate. They share no state,
 
 For the Framework to function, every Agent identity emitted by a Control Plane must resolve to a contract in the Specification Plane that the invoked Agent can reach. If it does not, the invocation fails.
 
-This is the only requirement the Framework enforces between primitives. Meet it and all other choices are free.
+This is the only requirement the Framework enforces between primitives. All other choices are unconstrained.
 
 ## The Invocation Loop
 Every Agent invocation follows the same sequence:
@@ -159,18 +159,24 @@ flowchart LR
 
 ## Layered Context
 
-**Layered Context** is the Framework's approach to context: context for an Agent should be layered, addressable, and loaded on demand at the point of need, rather than pre-loaded as a single undifferentiated payload. This keeps each invocation's context narrow, makes behaviour predictable, and keeps resource usage manageable as the work scales.
+**Layered Context** is the Framework's application of the **Interpretable Context Methodology** (ICM), introduced by Jake Van Clief and David McDermott in *Interpretable Context Methodology: Folder Structure as Agentic Architecture*.[^icm] ICM holds that context for an agent should be expressed as an addressable, layered structure, so that the agent loads what it needs at the point of need rather than receiving a single undifferentiated payload. The Framework builds directly on that work.
 
-The Framework takes a specific practice from this approach, folder-style addressing and layering of context, and applies it to the Specification Plane. It does not adopt any wider methodology wholesale. Every adoption of the Framework should structure its Specification Plane in the five layers below. A Specification Plane appropriately aligned to the Framework exposes all five layers as a single, version-controlled source of truth.
+Layered Context applies ICM to the Specification Plane: context for an Agent is layered, addressable, and loaded on demand. This keeps each invocation's context narrow, makes behaviour predictable, and keeps resource usage manageable as the work scales. Every adoption of the Framework should structure its Specification Plane in the five layers below. A Specification Plane appropriately aligned to the Framework exposes all five layers as a single, version-controlled source of truth.
+
+The distinction is one of scope. ICM uses folder structure to carry both the context an agent reads and the coordination that moves work from one stage to the next; in its model, the filesystem is the whole system. Layered Context takes only the first half: the addressable, layered structuring of context. It houses that in the Specification Plane and leaves coordination to the Control Plane, in keeping with the Framework's separation of those primitives. Layered Context is therefore ICM's context-structuring principle applied under that separation, not ICM adopted whole.
+
+[^icm]: Jake Van Clief and David McDermott, *Interpretable Context Methodology: Folder Structure as Agentic Architecture*, arXiv:2603.16021. https://arxiv.org/abs/2603.16021
 
 ### The Layers
 | Layer | Answers | Consumer |
 |---|---|---|
-| **L0** | Where am I? | Ambient context. Inherited by every Agent in the same scope upon invocation. |
-| **L1** | Which contract is mine? | Resolution. How an Agent resolves its contract from the identity it was invoked with. |
+| **L0** | Where am I? | Ambient context. The scope the Agent sits in and the lay of its surroundings, inherited by every Agent in that scope upon invocation. |
+| **L1** | Where do I go? | Resolution. The pointer from the invoked identity to where the Agent's contract lives. Deliberately minimal: one hop from a name to a location. |
 | **L2** | What do I do? | Agent identity. The role the Agent assumes when invoked. |
-| **L3** | What rules apply? | How the Agent performs its work with the given procedure, tools and references. |
-| **L4** | What am I working with? | The artefact specification. Shape, rules, location and handling process of input and output artefacts. References to supporting resources to complete the work. |
+| **L3** | What can I draw on? | The rules and procedure governing the role, and references to the tools and reference material available to it. Catalogued, not pre-loaded: the Agent draws from L3 once the task is known. |
+| **L4** | What am I working on? | The working artefact. Reading it is the point the task becomes known. L4 defines the shape, location, and handling of input and output artefacts, and the references needed to work with them. |
+
+The layers are ordered by when their content is needed. L0 through L3 prepare the Agent for work it has not yet seen: where it sits, which contract is its own, the role it assumes, and the reference material available to it. The Agent is ready, but does not yet know the task. The task becomes known only at L4, when the Agent reads the working artefact. With the task known, the Agent draws from its L3 catalogue the specific references that task requires, and no more. This is Context Discipline in practice: the artefact determines what context is loaded, just enough and just in time.
 
 ### Consumption
 
@@ -190,33 +196,29 @@ Enforcement of hygiene is a responsibility of the adopting party. The Framework 
 
 ## Workflows and Configurations
 
-A **Workflow** is a named arrangement of Agents: which roles take part, and how their inputs and outputs are wired. A Workflow is abstract. It defines roles and wiring, not the running machinery beneath them.
+A **Workflow** is a named arrangement of Agents: which roles take part, and how their inputs and outputs are wired. A Workflow is abstract; it defines roles and wiring, not the machinery beneath them.
 
-A **Configuration** is a Workflow bound to concrete primitive instances: a specific Control Plane, a specific Execution Plane host, and the Specification Plane it pulls contracts from. The same Workflow can run as many Configurations, each binding the same roles and wiring to a different set of instances.
+A **Configuration** is a Workflow bound to concrete instances: a specific Control Plane, a specific Execution Plane host, and the Specification Plane it draws contracts from. One Workflow can run as many Configurations.
 
-Workflows are the unit of design. Configurations are the unit of deployment. A Workflow runs as one or more Configurations.
+Workflows are the unit of design. Configurations are the unit of deployment.
 
 ### Workflow Definitions
 
-A **Workflow Definition** is the durable, version-controlled encoding of a Workflow: the roles that take part and how their inputs and outputs are wired. The Workflow is the concept; the Workflow Definition is the durable encoding of it.
+A **Workflow Definition** is the durable, version-controlled encoding of a Workflow. The Workflow is the concept; the Definition is the recipe.
 
-A Workflow Definition is Control Plane data. It is the arrangement a Control Plane realises as its state machine when it runs a Configuration. It is not a contract and it is not an Artefact, so a Control Plane loading its own Workflow Definition does not breach the separation of the primitives. How and when a Control Plane loads a Definition (at deployment, at runtime, by path, by request) is the adopting party's choice and not the Framework's concern.
+A Workflow Definition is Control Plane data: the arrangement a Control Plane realises as its state machine. It is not a contract and not an Artefact, so a Control Plane loading its own Definition does not breach the separation of the primitives. How and when it loads one (at deployment, at runtime, by path, by request) is the adopting party's choice.
 
-A Workflow Definition may be stored in the Specification Plane, alongside the contracts of the roles it wires. This is permitted and encouraged, because co-locating the two makes the Framework's one enforced coupling checkable before runtime: every role a Definition names can be verified to resolve to a contract that sits beside it. Storing a Definition this way is a hygiene choice, not a Framework requirement, and it does not change what the Definition is. Even when it lives in the Specification Plane, it remains Control Plane data that the Control Plane reads as its own; it is never the Control Plane reading a contract.
-
-The Framework does not require a Workflow Definition to live in any particular primitive. It requires only that the Control Plane treat it as its own configuration and never reach into the Specification Plane for a contract.
+A Definition may be stored in the Specification Plane, beside the contracts of the roles it wires. This is encouraged: co-location makes the Framework's one inter-primitive requirement checkable before runtime, as every role named can be verified against a contract beside it. It remains Control Plane data either way. The Control Plane reads its own recipe, never a contract.
 
 ### Execution Profiles
 
-A Configuration binds an Execution Plane host to a Specification Plane source. An **Execution Profile** declares what an Agent identity requires in order to wake correctly: the conditions the Execution Plane must satisfy before the Agent begins work. It may state a bootstrap entry point, required tools, permitted paths, runtime flags, environment expectations, and any other capability the runtime must provide.
+A Configuration binds an Execution Plane host to a Specification Plane source. An **Execution Profile** declares what an Agent identity needs to wake correctly: a bootstrap entry point, required tools, permitted paths, runtime flags, environment expectations.
 
-The Execution Profile is a declarative part of the Specification Plane. The Specification Plane declares the conditions; it does not realise them. The Execution Plane reads the Profile and constructs a conformant runtime: selecting a runner, enabling tools, setting the working location, suppressing unwanted ambient context, or injecting the bootstrap into the invocation. The Profile is the conditions; the Configuration is the realisation of the selections that satisfy them.
+The Specification Plane declares these conditions; the Execution Plane realises them, constructing the runtime before the Agent begins work. The Profile is the conditions; the Configuration is the realisation.
 
-An Execution Profile does not move the Control Plane boundary. The Control Plane still dispatches only an Agent identity and an input Artefact reference. It does not name the bootstrap, interpret tool requirements, configure the runtime, or instruct the Agent how to perform its role.
+This does not move the Control Plane boundary. The Control Plane still dispatches only an identity and an input reference. It does not name the bootstrap, configure the runtime, or instruct the Agent. Startup stays deterministic without the Control Plane holding procedure.
 
-This keeps startup deterministic without making the Control Plane responsible for procedure. The Specification Plane declares what an Agent needs to wake correctly; the Execution Plane realises those needs; the Control Plane remains a dispatcher of identity and references.
-
-An Execution Profile is not a sixth layer. It is the L3 content the Execution Plane reads to construct the runtime before the Agent begins work: the subset of an Agent's rules, tools, and runtime conditions that must be satisfied for it to wake correctly. The five layers remain the single source of truth; the Profile is a view onto them, not an addition to them.
+An Execution Profile is not a sixth layer. It is the L3 content the Execution Plane reads to build the runtime: the subset of an Agent's rules, tools, and conditions needed to wake correctly. The five layers remain the single source of truth; the Profile is a view onto them.
 
 ### Reference Topologies
 
@@ -268,3 +270,5 @@ A Subdomain corresponds one-to-one with a Specification Plane: the setting and s
 This is an engineering test, not a naming one. Before declaring a new Subdomain, ask whether the new work needs its own setting and its own shared truths. If it can run on the existing ones, it belongs to the Subdomain that already exists.
 
 A Domain contains one or more Subdomains. Subdomains may overlap, nest, or invoke each other. The shape of the Subdomain map is determined by the parties adopting the Framework; the Framework does not prescribe it beyond the one-to-one rule above.
+
+The whole arrangement nests: a Domain holds Subdomains, a Subdomain holds Workflows, a Workflow deploys as Configurations, and a Configuration is built from the four primitives.
