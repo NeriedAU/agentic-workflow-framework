@@ -50,13 +50,14 @@ It owns the workflow. The Control Plane holds the state machine for a Configurat
 
 It owns the protocol. The Control Plane defines the communication contract with the Agent: the signals it emits, the responses it expects, and their format. It governs the shape of the exchange, never how the Agent does its work.
 
-#### Suggested response signals
-The Framework does not prescribe signal names, payload shapes, or transport. A Control Plane should nevertheless provide response signals with semantics equivalent to this baseline:
+The Framework does not prescribe signal names, payload shapes, or transport. A Control Plane should nevertheless provide response signals with semantics equivalent to the suggested baseline below.
 
-- **Complete.** The Agent fulfilled its contract for this invocation. The response carries the output Artefact reference where one was produced.
-- **Needs input.** The Agent cannot proceed without input from outside the current Workflow. The Control Plane parks the current stage and may resume it when that input arrives.
-- **Return to previous.** The Agent cannot complete because work owned by an earlier stage must change. The Control Plane returns the Workflow to that stage with actionable feedback.
-- **Failed.** The Agent cannot complete or recover within its contract. The Control Plane terminates or otherwise handles the failure according to its state machine.
+| Suggested response signal | Semantics |
+|---|---|
+| **Complete** | The Agent fulfilled its contract for this invocation. The response carries the output Artefact reference where one was produced. |
+| **Needs input** | The Agent cannot proceed without input from outside the current Workflow. The Control Plane parks the current stage and may resume it when that input arrives. |
+| **Return to previous** | The Agent cannot complete because work owned by an earlier stage must change. The Control Plane returns the Workflow to that stage with actionable feedback. |
+| **Failed** | The Agent cannot complete or recover within its contract. The Control Plane terminates or otherwise handles the failure according to its state machine. |
 
 These labels are illustrative, not normative. A Control Plane may call them anything, combine them with additional signals, or encode them however it chooses, provided their semantics are explicit. In particular, **Needs input** and **Return to previous** are not interchangeable: one requests input from outside the current Workflow; the other hands work back within it.
 
